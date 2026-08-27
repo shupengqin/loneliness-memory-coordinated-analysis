@@ -1,0 +1,36 @@
+# Python and local environments
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+.env
+!.env.example
+
+# Local data and generated research products
+data/raw/*
+!data/raw/.gitkeep
+outputs/*
+!outputs/.gitkeep
+!outputs/README.md
+work/
+
+# Cohort and participant-level file formats
+*.dta
+*.sav
+*.rds
+*.parquet
+*.feather
+*.csv
+*.csv.gz
+*.xlsx
+*.zip
+
+# Manuscript and figure artifacts are kept outside this code repository
+*.docx
+*.pdf
+*.png
+*.tif
+*.tiff
+*.svg
