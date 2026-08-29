@@ -1,7 +1,7 @@
 """Fit cohort-specific longitudinal models and pool slope differences.
 
-The estimand is the additional 10-year change in baseline-standardized
-episodic memory associated with baseline loneliness.
+The estimand is the difference in baseline-standardized episodic-memory slope
+associated with baseline loneliness, rescaled to a 10-year interval.
 """
 
 from __future__ import annotations
@@ -277,7 +277,7 @@ def main() -> None:
         "core_formula": CORE_FORMULA,
         "full_formula": FULL_FORMULA,
         "target_term": TARGET_TERM,
-        "effect_unit": "SD difference in 10-year memory change for lonely versus not lonely",
+        "effect_unit": "SD difference in memory slope rescaled to a 10-year interval for lonely versus not lonely",
         "software": {
             "python": __import__("sys").version,
             "numpy": np.__version__,

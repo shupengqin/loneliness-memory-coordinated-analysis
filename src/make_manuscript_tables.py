@@ -176,7 +176,7 @@ def table3() -> None:
         row = models[(models["model"] == "core") & (models["cohort"] == cohort)].iloc[0]
         rows.append(
             {
-                "Estimand": "10-year memory change",
+                "Estimand": "10-year-scaled memory slope difference",
                 "Cohort": cohort,
                 "Participants": n(row["participants"]),
                 "Observations": n(row["observations"]),
@@ -190,7 +190,7 @@ def table3() -> None:
     slope_meta = meta[meta["model"] == "core"].iloc[0]
     rows.append(
         {
-            "Estimand": "10-year memory change",
+            "Estimand": "10-year-scaled memory slope difference",
             "Cohort": "Pooled",
             "Participants": n(model_n["participants"].sum()),
             "Observations": n(model_n["observations"].sum()),
@@ -205,7 +205,7 @@ def table3() -> None:
         "table_3_primary_model_estimates",
         pd.DataFrame(rows),
         "Table 3 | Primary model estimates across five ageing cohorts",
-        "Cohort-specific estimates came from core linear mixed-effects models with participant-specific random intercepts and time slopes. Pooled estimates used two-stage REML random-effects meta-analysis with Hartung-Knapp confidence intervals and t-based prediction intervals. Baseline memory level and 10-year change are reported on the cohort-specific baseline-SD scale.",
+        "Cohort-specific estimates came from core linear mixed-effects models with participant-specific random intercepts and time slopes. Pooled estimates used two-stage REML random-effects meta-analysis with Hartung-Knapp confidence intervals and t-based prediction intervals. Baseline memory level and the memory slope scaled to a 10-year interval are reported on the cohort-specific baseline-SD scale; this scaling does not imply 10 years of observation for every cohort.",
     )
 
 
@@ -247,11 +247,11 @@ def table4() -> None:
         source, key = sources[analysis]
         row = source[source[key] == analysis].iloc[0]
         effect_scale = (
-            "log odds of recalled fraction per 10 years"
+            "log odds of recalled fraction per 10-year interval"
             if analysis == "fractional_logit_recall"
             else row["effect_scale"]
             if "effect_scale" in row.index
-            else "baseline-SD units per 10 years"
+            else "baseline-SD slope difference rescaled to a 10-year interval"
         )
         rows.append(
             {
@@ -267,7 +267,7 @@ def table4() -> None:
         "table_4_sensitivity_and_weighting",
         pd.DataFrame(rows),
         "Table 4 | Sensitivity and observation-weighting analyses",
-        "The primary estimand is the adjusted difference in 10-year episodic-memory change between participants classified as lonely and not lonely at baseline. The fractional-logit result is on the log-odds scale and is not numerically comparable with the standardized memory-slope estimates. I2 denotes I-squared.",
+        "The primary estimand is the adjusted difference in episodic-memory slope between participants classified as lonely and not lonely at baseline, rescaled to a 10-year interval. The fractional-logit result is on the log-odds scale and is not numerically comparable with the standardized memory-slope estimates. I2 denotes I-squared.",
     )
 
 
@@ -317,7 +317,7 @@ def table5() -> None:
         "table_5_exploratory_analyses",
         pd.DataFrame(rows),
         "Table 5 | Exploratory repeated-exposure, lagged, nonlinear and effect-modification analyses",
-        "These analyses were hypothesis-generating. Repeated-exposure groups used future exposure information and continued observation; available-signal analyses mixed loneliness instruments across cohorts; 10-year quadratic-time contrasts required extrapolation in shorter cohorts. They were not used to strengthen the primary claim.",
+        "These analyses were hypothesis-generating. Repeated-exposure groups used future exposure information and continued observation; available-signal analyses mixed loneliness instruments across cohorts; 10-year quadratic-time contrasts required extrapolation in shorter cohorts. The primary 10-year quantity is a slope rescaling, whereas the 10-year quadratic-time horizon is a model-based contrast. These analyses were not used to strengthen the primary claim.",
     )
 
 

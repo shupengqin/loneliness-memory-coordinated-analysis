@@ -128,7 +128,7 @@ def fit_fractional_logit(cohort: str) -> dict:
     return {
         "cohort": cohort,
         "analysis": "fractional_logit_recall",
-        "scale": "log odds of the recalled fraction per 10 years",
+        "scale": "log odds of the recalled fraction per 10-year interval",
         "estimate": estimate,
         "std_error": std_error,
         "ci_low": estimate - critical * std_error,

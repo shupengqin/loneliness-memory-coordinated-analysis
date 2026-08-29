@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,7 @@ from project_config import OUTPUT_DIR, PROJECT_ROOT
 ROOT = PROJECT_ROOT
 OUT = OUTPUT_DIR
 SUPP = OUT / "supplementary_tables"
+PACKAGE_DIR = Path(os.environ.get("GLOBAL_AGEING_PACKAGE_DIR", OUT)).expanduser()
 COHORTS = ["CHARLS", "ELSA", "HRS", "MHAS", "SHARE"]
 
 
@@ -26,6 +28,9 @@ def fmt_number(value: object, digits: int = 3) -> str:
 def save(frame: pd.DataFrame, filename: str) -> pd.DataFrame:
     SUPP.mkdir(parents=True, exist_ok=True)
     frame.to_csv(SUPP / filename, index=False)
+    package_supp = PACKAGE_DIR / "supplementary_tables"
+    package_supp.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(package_supp / filename, index=False)
     return frame
 
 
@@ -208,10 +213,10 @@ def primary_results_table() -> pd.DataFrame:
             result["analysis"].eq("standardized_loneliness"),
         ],
         [
-            "log odds of recalled fraction per 10 years",
-            "baseline-SD units per 10 years per exposure SD",
+            "log odds of recalled fraction per 10-year interval",
+            "baseline-SD slope difference per exposure SD, rescaled to a 10-year interval",
         ],
-        default="baseline-SD units per 10 years",
+        default="baseline-SD slope difference rescaled to a 10-year interval",
     )
     result.insert(1, "effect_scale", scale)
     return save(result, "table_s5_primary_and_sensitivity_meta_results.csv")
@@ -225,12 +230,18 @@ def selection_table() -> pd.DataFrame:
 def exploratory_table() -> pd.DataFrame:
     rows = []
     patterns = pd.read_csv(OUT / "exposure_pattern_meta_results.csv")
+    pattern_labels = {
+        "available_signal:persistent_vs_never": "Available signal: persistent vs never",
+        "available_signal:transient_or_changing_vs_never": "Available signal: transient/changing vs never",
+        "same_item:persistent_vs_never": "Same item: persistent vs never",
+        "same_item:transient_or_changing_vs_never": "Same item: transient/changing vs never",
+    }
     for row in patterns.itertuples(index=False):
         rows.append(
             {
                 "analysis_family": "Repeated-exposure pattern",
-                "contrast": row.contrast,
-                "effect_scale": "baseline-SD difference in 10-year memory change",
+                "contrast": pattern_labels.get(row.contrast, row.contrast),
+                "effect_scale": "10-year slope difference (baseline SD)",
                 "k": row.k,
                 "estimate": row.pooled_estimate,
                 "ci_low": row.ci_low,
@@ -246,8 +257,11 @@ def exploratory_table() -> pd.DataFrame:
         rows.append(
             {
                 "analysis_family": "Lagged adjacent-assessment association",
-                "contrast": row.rule,
-                "effect_scale": "baseline-SD difference at the next assessment",
+                "contrast": {
+                    "available_signal": "Available signal",
+                    "same_item": "Same item",
+                }.get(row.rule, row.rule),
+                "effect_scale": "Difference at next assessment (baseline SD)",
                 "k": row.k,
                 "estimate": row.pooled_estimate,
                 "ci_low": row.ci_low,
@@ -262,11 +276,11 @@ def exploratory_table() -> pd.DataFrame:
     coefficient_labels = {
         "time10:lonely": (
             "linear loneliness-by-time component",
-            "baseline-SD units per 10 years",
+            "10-year slope difference (baseline SD)",
         ),
         "time10_sq:lonely": (
             "quadratic loneliness-by-time component",
-            "baseline-SD units per squared 10-year unit",
+            "Quadratic time interaction (baseline SD per squared 10-year unit)",
         ),
     }
     for row in coefficients.loc[
@@ -294,7 +308,7 @@ def exploratory_table() -> pd.DataFrame:
             {
                 "analysis_family": "Quadratic-time group difference",
                 "contrast": f"{row.years:g} years",
-                "effect_scale": "baseline-SD group difference at stated horizon",
+                "effect_scale": "Group difference at stated horizon (baseline SD)",
                 "k": row.k,
                 "estimate": row.pooled_estimate,
                 "ci_low": row.ci_low,
@@ -310,8 +324,13 @@ def exploratory_table() -> pd.DataFrame:
         rows.append(
             {
                 "analysis_family": "Effect modification",
-                "contrast": row.contrast,
-                "effect_scale": "difference in the baseline-SD 10-year slope contrast",
+                "contrast": {
+                    "female_vs_male": "Women vs men",
+                    "per_10_year_older_age": "Per 10 years older",
+                    "tertiary_vs_low_education": "Tertiary vs low education",
+                    "upper_secondary_vs_low_education": "Upper-secondary vs low education",
+                }.get(row.contrast, row.contrast),
+                "effect_scale": "Difference in 10-year slope contrast (baseline SD)",
                 "k": row.k,
                 "estimate": row.pooled_estimate,
                 "ci_low": row.ci_low,
@@ -330,12 +349,59 @@ def death_coverage_table() -> pd.DataFrame:
     return save(coverage, "table_s8_death_information_coverage.csv")
 
 
-def render_table(frame: pd.DataFrame, columns: list[str], digits: int = 3) -> str:
+def leave_one_cohort_out_table() -> pd.DataFrame:
+    core = pd.read_csv(OUT / "leave_one_out_core.csv").assign(model="Core")
+    full = pd.read_csv(OUT / "leave_one_out_full.csv").assign(model="Fully adjusted")
+    columns = [
+        "model",
+        "omitted_cohort",
+        "k",
+        "pooled_estimate",
+        "ci_low",
+        "ci_high",
+        "i2_percent",
+        "prediction_low",
+        "prediction_high",
+    ]
+    return save(pd.concat([core[columns], full[columns]], ignore_index=True),
+                "table_s9_leave_one_cohort_out.csv")
+
+
+def weight_diagnostics_table() -> pd.DataFrame:
+    diagnostics = pd.read_csv(OUT / "attrition_weight_diagnostics.csv")
+    columns = [
+        "cohort",
+        "denominator_converged",
+        "numerator_converged",
+        "denominator_probability_raw_min",
+        "denominator_probability_raw_max",
+        "ipow_observed_n",
+        "ipow_observed_mean",
+        "ipow_observed_sd",
+        "ipow_truncation_low",
+        "ipow_truncation_high",
+        "ipow_effective_sample_size",
+        "combined_observed_n",
+        "combined_effective_sample_size",
+    ]
+    return save(diagnostics[columns], "table_s10_weight_diagnostics.csv")
+
+
+def render_table(
+    frame: pd.DataFrame,
+    columns: list[str],
+    digits: int = 3,
+    header_labels: dict[str, str] | None = None,
+) -> str:
     display = frame[columns].copy()
     for column in display.columns:
         if pd.api.types.is_numeric_dtype(display[column]):
             display[column] = display[column].map(lambda value: fmt_number(value, digits))
-    headers = [str(column).replace("_", " ") for column in display.columns]
+    header_labels = header_labels or {}
+    headers = [
+        header_labels.get(str(column), str(column).replace("_", " "))
+        for column in display.columns
+    ]
     lines = [
         "| " + " | ".join(headers) + " |",
         "| " + " | ".join(["---"] * len(headers)) + " |",
@@ -357,6 +423,10 @@ def write_markdown(tables: dict[str, pd.DataFrame]) -> None:
     s6 = tables["s6"]
     s7 = tables["s7"]
     s8 = tables["s8"]
+    s9 = tables["s9"]
+    s10 = tables["s10"]
+    s7_main = s7.loc[s7["analysis_family"].ne("Effect modification")]
+    s7_modifiers = s7.loc[s7["analysis_family"].eq("Effect modification")]
 
     text = f"""# Supplementary Information
 
@@ -364,21 +434,29 @@ def write_markdown(tables: dict[str, pd.DataFrame]) -> None:
 
 ### Analysis-set selection and observation weighting
 
-The baseline-eligible population comprised participants with complete core baseline variables and a respondent-completed baseline memory assessment. The primary longitudinal analysis additionally required at least one later respondent-completed assessment of both immediate and delayed recall. Proxy observations were excluded when a harmonized proxy indicator was available; CHARLS eligibility instead required completed-interview status and valid recall scores because the selected harmonized file lacked that indicator. We compared baseline characteristics between participants who did and did not enter the longitudinal sample using standardized mean differences. Observation weights were estimated in the full baseline-eligible participant-by-wave panel from baseline loneliness, memory, age, sex, education, partnered status, survey wave and SHARE country. These weights address selection associated with measured baseline predictors, but they do not identify outcomes after death or remove selection through unmeasured health deterioration.
+The baseline-eligible population comprised participants with complete core baseline variables and a respondent-completed baseline memory assessment. The primary longitudinal analysis additionally required at least one later respondent-completed assessment of both immediate and delayed recall. Proxy observations were excluded when a harmonized proxy indicator was available; CHARLS eligibility instead required completed-interview status and valid recall scores because the selected harmonized file lacked that indicator. We compared baseline characteristics between participants who did and did not enter the longitudinal sample using standardized mean differences. Observation weights were estimated in the full baseline-eligible participant-by-wave panel. Denominator logistic models included scheduled wave, SHARE country where applicable, baseline loneliness, baseline memory, age, sex, education and partnered status; numerator models included schedule terms only. Predicted probabilities were bounded to 0.01-0.99, and stabilized weights were truncated at the cohort-specific 1st and 99th percentiles. We assessed model convergence, fitted-probability ranges, weight distributions and Kish effective sample sizes. These weights address selection associated with measured baseline predictors, but they do not identify outcomes after death or remove selection through unmeasured health deterioration. No missing-value imputation was used.
 
 ### Bounded recall sensitivity analysis
 
-To test whether results depended on treating the standardized memory composite as an unbounded Gaussian outcome, we divided the sum of immediate and delayed recall by the cohort-specific maximum possible total. Cohort-specific fractional-logit generalized estimating equations used a logit mean model, participant clustering, exchangeable working correlation and robust standard errors. The loneliness-by-time coefficient was pooled using the same two-stage REML and Hartung-Knapp procedure. This coefficient is on a log-odds scale and is therefore not numerically comparable with the primary standardized mean slope.
+To test whether results depended on treating the standardized memory composite as an unbounded Gaussian outcome, we divided the sum of immediate and delayed recall by the cohort-specific maximum possible total. The maximum total was 20 in CHARLS, ELSA, HRS and SHARE and 16 in MHAS. Cohort-specific fractional-logit generalized estimating equations used a logit mean model, participant clustering, exchangeable working correlation and robust standard errors. The loneliness-by-time coefficient was pooled using the same two-stage REML and Hartung-Knapp procedure. This coefficient is on a log-odds scale and is therefore not numerically comparable with the primary standardized mean slope.
 
 ### Exploratory repeated-exposure analyses
 
-Repeated-exposure patterns and lagged adjacent-assessment associations were treated as hypothesis-generating. Pattern classifications depended on later exposure observations and should not be interpreted as baseline prognostic groups or causal exposure regimes. The same-item analysis excluded SHARE because repeated harmonized single-item loneliness was unavailable; the available-signal analysis used the later SHARE three-item scale as an explicitly measurement-mixed fallback.
+Repeated-exposure patterns and lagged adjacent-assessment associations were treated as hypothesis-generating. Pattern classifications depended on later exposure observations and should not be interpreted as baseline prognostic groups or causal exposure regimes. The same-item analysis excluded SHARE because repeated harmonized single-item loneliness was unavailable; the available-signal analysis used the later SHARE three-item scale as an explicitly measurement-mixed fallback. The primary longitudinal coefficient is a linear slope rescaled to a 10-year interval, not a requirement that every cohort be observed for 10 years. Ten-year contrasts from the quadratic-time model are extrapolated in cohorts with shorter observed follow-up.
 
 ## Supplementary Tables
 
-### Table S1 | Cohort design, measurements and analysis-set retention
+### Table S1 | Cohort design, data products and source files
 
-{render_table(s1, ['cohort', 'setting', 'analysis_data_product', 'release_date', 'source_release_basis', 'analysis_source_file', 'baseline_wave', 'memory_waves', 'recall_words_per_test', 'baseline_loneliness', 'proxy_rule', 'maximum_observed_followup_years', 'baseline_eligible', 'longitudinal_sample', 'retained_percent'], 1)}
+{render_table(s1, ['cohort', 'setting', 'analysis_data_product', 'release_date', 'source_release_basis', 'analysis_source_file'], 1, header_labels={'analysis_data_product': 'data product', 'source_release_basis': 'source release', 'analysis_source_file': 'source file'})}
+
+### Table S1 (continued) | Measurement definitions and proxy rules
+
+{render_table(s1, ['cohort', 'baseline_wave', 'memory_waves', 'recall_words_per_test', 'baseline_loneliness', 'proxy_rule'], 1, header_labels={'baseline_wave': 'baseline wave', 'memory_waves': 'memory waves', 'recall_words_per_test': 'words per recall test', 'baseline_loneliness': 'baseline loneliness', 'proxy_rule': 'proxy rule'})}
+
+### Table S1 (continued) | Analysis-set retention
+
+{render_table(s1, ['cohort', 'maximum_observed_followup_years', 'baseline_eligible', 'longitudinal_sample', 'retained_percent'], 1, header_labels={'maximum_observed_followup_years': 'maximum follow-up (years)', 'baseline_eligible': 'baseline eligible (n)', 'longitudinal_sample': 'longitudinal sample (n)', 'retained_percent': 'retained (%)'})}
 
 ### Table S2 | Participant flow
 
@@ -404,9 +482,15 @@ Positive standardized differences indicate a higher mean or proportion among inc
 
 {render_table(s6, ['cohort', 'label', 'included_mean_or_proportion', 'excluded_mean_or_proportion', 'standardized_difference'])}
 
-### Table S7 | Exploratory repeated-exposure, lagged, nonlinear and effect-modification meta-results
+### Table S7 | Exploratory repeated-exposure, lagged and nonlinear meta-results
 
-{render_table(s7, ['analysis_family', 'contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high', 'adjusted_p_value'])}
+{render_table(s7_main, ['analysis_family', 'contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'], header_labels={'analysis_family': 'analysis family', 'effect_scale': 'effect scale', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I2 (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high'})}
+
+No multiplicity-adjusted P values were applied to these exploratory repeated-exposure, lagged or nonlinear contrasts.
+
+### Table S7 (continued) | Effect-modification meta-results
+
+{render_table(s7_modifiers, ['contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high', 'adjusted_p_value'], header_labels={'effect_scale': 'effect scale', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I2 (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high', 'adjusted_p_value': 'adjusted P value'})}
 
 ### Table S8 | Availability and calendar coverage of harmonized death information
 
@@ -414,14 +498,32 @@ Death counts in this table describe metadata coverage in each full harmonized so
 
 {render_table(s8, ['cohort', 'source_rows', 'known_death_year_n', 'known_death_year_percent', 'minimum_known_death_year', 'maximum_known_death_year', 'maximum_analysis_interview_year'], 1)}
 
+### Table S9 | Leave-one-cohort-out meta-analysis
+
+{render_table(s9, ['model', 'omitted_cohort', 'k', 'pooled_estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'])}
+
+Each row omits the named cohort before random-effects pooling. Estimates are baseline-SD slope differences rescaled to a 10-year interval.
+
+### Table S10 | Observation-weight diagnostics
+
+{render_table(s10, ['cohort', 'denominator_converged', 'numerator_converged', 'denominator_probability_raw_min', 'denominator_probability_raw_max', 'ipow_observed_n', 'ipow_observed_mean', 'ipow_observed_sd'], header_labels={'denominator_converged': 'denominator converged', 'numerator_converged': 'numerator converged', 'denominator_probability_raw_min': 'denominator p (min)', 'denominator_probability_raw_max': 'denominator p (max)', 'ipow_observed_n': 'IP observation n', 'ipow_observed_mean': 'IP weight mean', 'ipow_observed_sd': 'IP weight SD'})}
+
+### Table S10 (continued) | Weight truncation and effective sample size
+
+{render_table(s10, ['cohort', 'ipow_truncation_low', 'ipow_truncation_high', 'ipow_effective_sample_size', 'combined_observed_n', 'combined_effective_sample_size'], header_labels={'ipow_truncation_low': 'IP truncation low', 'ipow_truncation_high': 'IP truncation high', 'ipow_effective_sample_size': 'IP effective sample size', 'combined_observed_n': 'combined observed n', 'combined_effective_sample_size': 'combined effective sample size'})}
+
+The denominator probability range is calculated before the 0.01-0.99 bounding step. Stabilized observation weights were truncated at the cohort-specific 1st and 99th percentiles. Kish effective sample size was calculated as (sum of weights)^2 / sum of squared weights among the indicated follow-up panel rows. Combined weights multiply the truncated observation weight by the normalized baseline survey weight; rows with missing survey weights are omitted from the combined-weight diagnostic.
+
 ## Supplementary Reporting Notes
 
 - `n` denotes participants for participant counts and participant-wave records for observation counts.
 - The independent unit for all inferential models was the participant.
-- The common primary exposure was a cohort-harmonized single loneliness item; harmonization and cohort-level standardization do not establish measurement invariance across languages or instruments.
+- The common primary exposure was a cohort-harmonized single loneliness item; the CHARLS four-level item was folded into a binary indicator, whereas the other cohorts used binary harmonized items. Harmonization and cohort-level standardization do not establish measurement invariance across languages or instruments.
+- Episodic-memory scores had a maximum of 10 words per recall test in four cohorts and 8 in MHAS; all pooled effects are reported in within-cohort baseline-SD units.
+- SHARE was analysed as one cohort-level study unit covering 14 countries, with country terms included in the models; it was not treated as 14 independent meta-analysis units.
 - Primary mixed models, selected retest-timing analyses and weighted-GEE conclusions were independently reproduced in R. Exploratory analyses were not prospectively preregistered.
 """
-    (ROOT / "supplementary_materials_draft.md").write_text(text, encoding="utf-8")
+    (PACKAGE_DIR / "supplementary_information.md").write_text(text, encoding="utf-8")
 
 
 def main() -> None:
@@ -434,10 +536,12 @@ def main() -> None:
         "s6": selection_table(),
         "s7": exploratory_table(),
         "s8": death_coverage_table(),
+        "s9": leave_one_cohort_out_table(),
+        "s10": weight_diagnostics_table(),
     }
     write_markdown(tables)
-    print(f"Wrote {len(tables)} supplementary tables to {SUPP}")
-    print(f"Wrote {ROOT / 'supplementary_materials_draft.md'}")
+    print(f"Wrote {len(tables)} supplementary tables to {SUPP} and {PACKAGE_DIR / 'supplementary_tables'}")
+    print(f"Wrote {PACKAGE_DIR / 'supplementary_information.md'}")
 
 
 if __name__ == "__main__":

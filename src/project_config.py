@@ -13,7 +13,12 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIR = PROJECT_ROOT / "outputs"
+_configured_output_root = os.environ.get("GLOBAL_AGEING_OUTPUT_ROOT")
+OUTPUT_DIR = (
+    Path(_configured_output_root).expanduser()
+    if _configured_output_root
+    else PROJECT_ROOT / "outputs"
+)
 DERIVED_DIR = OUTPUT_DIR / "derived"
 
 _configured_root = os.environ.get("GLOBAL_AGEING_DATA_ROOT") or os.environ.get(

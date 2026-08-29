@@ -2,7 +2,7 @@
 
 This repository contains the analysis code for a coordinated longitudinal study of baseline loneliness and episodic-memory change in CHARLS, ELSA, HRS, MHAS and SHARE.
 
-The primary estimand is the difference in 10-year change in cohort-standardized episodic memory between participants classified as lonely and not lonely at baseline. The workflow also contains prespecified sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, five main figures, five main tables, supplementary tables and independent R checks.
+The primary estimand is the difference in cohort-standardized episodic-memory slope between participants classified as lonely and not lonely at baseline, rescaled to a 10-year interval. The workflow also contains sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, five main figures, five main tables, supplementary tables and independent R checks. Exploratory analyses were not prospectively preregistered and are labelled accordingly in the manuscript.
 
 ## Data are not included
 
@@ -18,7 +18,7 @@ The following files are expected by default in data/raw/:
 | MHAS | H_MHAS_c2.dta |
 | SHARE | H_SHARE_f2.dta |
 
-For files stored elsewhere, set GLOBAL_AGEING_DATA_ROOT to a directory containing these five files. Individual files can instead be configured with CHARLS_DATA_FILE, ELSA_DATA_FILE, HRS_DATA_FILE, MHAS_DATA_FILE and SHARE_DATA_FILE. The configuration is implemented in src/project_config.py.
+For files stored elsewhere, set GLOBAL_AGEING_DATA_ROOT to a directory containing these five files. Individual files can instead be configured with CHARLS_DATA_FILE, ELSA_DATA_FILE, HRS_DATA_FILE, MHAS_DATA_FILE and SHARE_DATA_FILE. The configuration is implemented in src/project_config.py. To write generated outputs outside the repository, set GLOBAL_AGEING_OUTPUT_ROOT to a permitted local output directory.
 
 Example in PowerShell:
 
@@ -52,6 +52,7 @@ python src/build_longitudinal_datasets.py
 python src/run_longitudinal_models.py
 python src/run_sensitivity_models.py
 python src/run_attrition_weighted_models.py
+python src/run_effect_modification_models.py
 python src/run_submission_enhancements.py
 python src/run_exposure_trajectory_models.py
 
@@ -67,7 +68,7 @@ Rscript src/validate_models_in_r.R
 Rscript src/validate_weighted_gee_in_r.R
 ~~~
 
-The first four scripts are read-only audits of the source files. Dataset construction writes cohort-local sequential participant identifiers to the derived files; these identifiers are pseudonyms, not a guarantee of anonymity. Treat all generated participant-level files as restricted research data.
+The first four scripts are read-only audits of the source files. Dataset construction writes cohort-local sequential participant identifiers to the derived files; these identifiers are pseudonyms, not a guarantee of anonymity. Treat all generated participant-level files as restricted research data. The submission-enhancement and weighting steps also write selection, death-coverage and weight-diagnostic outputs used by the supplementary tables.
 
 ## Repository layout
 
@@ -77,7 +78,7 @@ data/      data-use instructions; raw files are ignored
 outputs/   generated tables, figures and derived data; contents are ignored
 ~~~
 
-The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials. The manuscript figure script writes five main figures with editable SVG/PDF outputs, 600 dpi TIFF files, 300 dpi PNG previews and aggregate figure Source Data. The manuscript table script writes five main tables as CSV and Markdown files.
+The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials. The manuscript figure script writes five main figures with editable SVG/PDF outputs, 600 dpi TIFF files, 300 dpi PNG previews and aggregate figure Source Data. The manuscript table script writes five main tables as CSV and Markdown files. The supplementary-material script writes ten supplementary tables, including leave-one-cohort-out estimates and observation-weight diagnostics.
 
 ## Version control and release
 

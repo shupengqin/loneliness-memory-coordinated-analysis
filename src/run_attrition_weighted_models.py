@@ -23,6 +23,16 @@ OUTCOME_FORMULA = (
 TARGET_TERM = "time10:lonely"
 
 
+def effective_sample_size(weights: pd.Series) -> float:
+    """Return the Kish effective sample size for a non-negative weight vector."""
+
+    values = pd.to_numeric(weights, errors="coerce").dropna()
+    denominator = float(np.square(values).sum())
+    if values.empty or denominator <= 0:
+        return float("nan")
+    return float(np.square(values.sum()) / denominator)
+
+
 def load_panel(cohort: str) -> pd.DataFrame:
     panel = pd.read_csv(DERIVED_DIR / f"{cohort.lower()}_attrition_panel.csv.gz")
     if not pd.api.types.is_bool_dtype(panel["observed"]):
@@ -60,8 +70,10 @@ def estimate_weights(panel: pd.DataFrame, cohort: str) -> tuple[pd.DataFrame, li
             numerator_formula, data=followup, family=sm.families.Binomial()
         ).fit(maxiter=200)
 
-    denominator_p = np.clip(denominator_fit.predict(followup), 0.01, 0.99)
-    numerator_p = np.clip(numerator_fit.predict(followup), 0.01, 0.99)
+    denominator_p_raw = denominator_fit.predict(followup)
+    numerator_p_raw = numerator_fit.predict(followup)
+    denominator_p = np.clip(denominator_p_raw, 0.01, 0.99)
+    numerator_p = np.clip(numerator_p_raw, 0.01, 0.99)
     stabilized = numerator_p / denominator_p
     result.loc[followup.index, "ipow"] = stabilized
 
@@ -76,6 +88,9 @@ def estimate_weights(panel: pd.DataFrame, cohort: str) -> tuple[pd.DataFrame, li
     normalized = baseline_weights / positive.mean()
     result["survey_weight"] = result["pid"].map(normalized)
     result["combined_weight"] = result["ipow_truncated"] * result["survey_weight"]
+
+    observed_ipow = result.loc[observed_followup, "ipow_truncated"].dropna()
+    observed_combined = result.loc[observed_followup, "combined_weight"].dropna()
 
     response_rows = []
     for wave, group in result.groupby("wave"):
@@ -100,6 +115,18 @@ def estimate_weights(panel: pd.DataFrame, cohort: str) -> tuple[pd.DataFrame, li
         "ipow_truncation_high": upper,
         "denominator_min_probability": denominator_p.min(),
         "denominator_max_probability": denominator_p.max(),
+        "denominator_probability_raw_min": denominator_p_raw.min(),
+        "denominator_probability_raw_max": denominator_p_raw.max(),
+        "denominator_probability_below_0_05_percent": float(
+            100 * (denominator_p_raw < 0.05).mean()
+        ),
+        "denominator_probability_above_0_95_percent": float(
+            100 * (denominator_p_raw > 0.95).mean()
+        ),
+        "ipow_observed_n": int(len(observed_ipow)),
+        "ipow_effective_sample_size": effective_sample_size(observed_ipow),
+        "combined_observed_n": int(len(observed_combined)),
+        "combined_effective_sample_size": effective_sample_size(observed_combined),
     }
     return result, response_rows, diagnostics
 
