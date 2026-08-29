@@ -2,7 +2,7 @@
 
 This repository contains the analysis code for a coordinated longitudinal study of baseline loneliness and episodic-memory change in CHARLS, ELSA, HRS, MHAS and SHARE.
 
-The primary estimand is the difference in 10-year change in cohort-standardized episodic memory between participants classified as lonely and not lonely at baseline. The workflow also contains prespecified sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, figures, supplementary tables and independent R checks.
+The primary estimand is the difference in 10-year change in cohort-standardized episodic memory between participants classified as lonely and not lonely at baseline. The workflow also contains prespecified sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, five main figures, five main tables, supplementary tables and independent R checks.
 
 ## Data are not included
 
@@ -56,6 +56,7 @@ python src/run_submission_enhancements.py
 python src/run_exposure_trajectory_models.py
 
 python src/make_manuscript_figures.py
+python src/make_manuscript_tables.py
 python src/build_supplementary_materials.py
 ~~~
 
@@ -76,7 +77,7 @@ data/      data-use instructions; raw files are ignored
 outputs/   generated tables, figures and derived data; contents are ignored
 ~~~
 
-The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials.
+The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials. The manuscript figure script writes five main figures with editable SVG/PDF outputs, 600 dpi TIFF files, 300 dpi PNG previews and aggregate figure Source Data. The manuscript table script writes five main tables as CSV and Markdown files.
 
 ## Version control and release
 
