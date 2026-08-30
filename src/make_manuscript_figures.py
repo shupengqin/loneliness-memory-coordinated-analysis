@@ -1,12 +1,12 @@
 # Academic Figure Skill Asset Confirmation (verified against assets/figures/)
-# (a) study flow -> cross-type inherit -> param inherit
-# (b) observed trajectories -> LineTrend -> param inherit
-# (c) primary associations -> Forest -> param inherit
-# (d) sensitivity and selection -> Forest/Heatmap -> param inherit
-# (e) exploratory analyses -> Forest/GroupedBarChart -> param inherit
+# Main Figure 1: study flow -> cross-type inherit -> param inherit
+# Main Figure 2: primary associations -> Forest -> param inherit
+# Supplementary Figure S1: sensitivity and selection -> Forest/Heatmap -> param inherit
+# Supplementary Figure S2: observed trajectories -> LineTrend -> param inherit
+# Supplementary Figure S3: exploratory analyses -> Forest/GroupedBarChart -> param inherit
 # RULE: All panels use the validated analysis outputs below; no participant-level data are exported.
 
-"""Create the five main figures for the coordinated ageing-cohort manuscript.
+"""Create the main and supplementary figures for the coordinated ageing-cohort manuscript.
 
 The script reads only the validated aggregate outputs and the restricted local
 derived long files needed for descriptive trajectories. It writes editable
@@ -55,7 +55,7 @@ GRID = "#D9DEE4"
 LIGHT = "#EEF1F4"
 
 
-def resolve_paths() -> tuple[Path, Path, Path]:
+def resolve_paths() -> tuple[Path, Path, Path, Path]:
     """Resolve analysis, package, and figure directories for local or repo use."""
 
     script_dir = Path(__file__).resolve().parent
@@ -63,18 +63,23 @@ def resolve_paths() -> tuple[Path, Path, Path]:
         package_dir = script_dir.parent
         analysis_dir = package_dir.parent / "分析输出_数据"
         figure_dir = package_dir / "figures"
+        supplementary_figure_dir = package_dir / "supplementary_figures"
     else:
         project_root = script_dir.parent
         package_dir = project_root
         analysis_dir = project_root / "outputs"
         figure_dir = project_root / "outputs" / "figures"
+        supplementary_figure_dir = project_root / "outputs" / "supplementary_figures"
 
     analysis_dir = Path(os.environ.get("GLOBAL_AGEING_ANALYSIS_DIR", analysis_dir))
     figure_dir = Path(os.environ.get("GLOBAL_AGEING_FIGURE_DIR", figure_dir))
-    return analysis_dir, package_dir, figure_dir
+    supplementary_figure_dir = Path(
+        os.environ.get("GLOBAL_AGEING_SUPPLEMENTARY_FIGURE_DIR", supplementary_figure_dir)
+    )
+    return analysis_dir, package_dir, figure_dir, supplementary_figure_dir
 
 
-ANALYSIS_DIR, PACKAGE_DIR, FIGURE_DIR = resolve_paths()
+ANALYSIS_DIR, PACKAGE_DIR, FIGURE_DIR, SUPPLEMENTARY_FIGURE_DIR = resolve_paths()
 DERIVED_DIR = ANALYSIS_DIR / "derived"
 
 mpl.rcParams.update(
@@ -137,12 +142,13 @@ def style_axis(ax: plt.Axes, grid_axis: str = "y") -> None:
         spine.set_color(CHARCOAL)
 
 
-def save_figure(fig: plt.Figure, stem: str) -> None:
-    FIGURE_DIR.mkdir(parents=True, exist_ok=True)
-    fig.savefig(FIGURE_DIR / f"{stem}.svg", bbox_inches="tight")
-    fig.savefig(FIGURE_DIR / f"{stem}.pdf", bbox_inches="tight")
-    fig.savefig(FIGURE_DIR / f"{stem}.tiff", dpi=600, bbox_inches="tight")
-    fig.savefig(FIGURE_DIR / f"{stem}.png", dpi=300, bbox_inches="tight")
+def save_figure(fig: plt.Figure, stem: str, directory: Path | None = None) -> None:
+    target = directory or FIGURE_DIR
+    target.mkdir(parents=True, exist_ok=True)
+    fig.savefig(target / f"{stem}.svg", bbox_inches="tight")
+    fig.savefig(target / f"{stem}.pdf", bbox_inches="tight")
+    fig.savefig(target / f"{stem}.tiff", dpi=600, bbox_inches="tight")
+    fig.savefig(target / f"{stem}.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -249,7 +255,7 @@ def baseline_pool() -> dict[str, float]:
         row = pd.read_csv(source).iloc[0]
         return {key: float(row[key]) for key in ["pooled_estimate", "ci_low", "ci_high"]}
     raise FileNotFoundError(
-        "The verified baseline meta-analysis output is required for Figure 3: "
+        "The verified baseline meta-analysis output is required for Figure 2: "
         f"{source}"
     )
 
@@ -401,7 +407,7 @@ def build_figure1() -> None:
     )
 
 
-def build_figure2() -> None:
+def build_supplementary_figure2() -> None:
     rows: list[dict[str, float | int | str]] = []
     for cohort in COHORTS:
         frame = pd.read_csv(DERIVED_DIR / f"{cohort.lower()}_long.csv.gz")
@@ -470,11 +476,13 @@ def build_figure2() -> None:
         linespacing=1.35,
     )
     fig.subplots_adjust(left=0.09, right=0.985, top=0.94, bottom=0.13, hspace=0.46, wspace=0.29)
-    save_figure(fig, "figure2_observed_trajectories")
-    trajectory.to_csv(FIGURE_DIR / "figure2_source_data.csv", index=False)
+    save_figure(fig, "supplementary_figure2_observed_trajectories", SUPPLEMENTARY_FIGURE_DIR)
+    trajectory.to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure2_source_data.csv", index=False
+    )
 
 
-def build_figure3() -> None:
+def build_figure2() -> None:
     fixed = read_csv("model_fixed_effects.csv")
     model = read_csv("cohort_model_estimates.csv")
     meta = read_csv("meta_analysis_results.csv")
@@ -552,7 +560,7 @@ def build_figure3() -> None:
     )
     ax_b.set_title("Longitudinal memory change", loc="left")
     fig.subplots_adjust(left=0.13, right=0.98, top=0.89, bottom=0.22)
-    save_figure(fig, "figure3_primary_associations")
+    save_figure(fig, "figure2_primary_associations")
 
     source_rows = []
     for estimand, frame, source in [
@@ -570,10 +578,10 @@ def build_figure3() -> None:
                     "source_file": source,
                 }
             )
-    pd.DataFrame(source_rows).to_csv(FIGURE_DIR / "figure3_source_data.csv", index=False)
+    pd.DataFrame(source_rows).to_csv(FIGURE_DIR / "figure2_source_data.csv", index=False)
 
 
-def build_figure4() -> None:
+def build_supplementary_figure1() -> None:
     meta = read_csv("meta_analysis_results.csv")
     sensitivity = read_csv("sensitivity_meta_results.csv")
     weighted = read_csv("attrition_weighted_meta_results.csv")
@@ -739,14 +747,14 @@ def build_figure4() -> None:
     fig.text(
         0.5,
         0.015,
-        "The bounded fractional-logit result is on a different log-odds scale and is reported in Table 4 and Supplementary Table S5.",
+        "The bounded fractional-logit result is on a different log-odds scale and is reported in Supplementary Table S5.",
         ha="center",
         va="bottom",
         fontsize=6.2,
         color=MUTED,
     )
     fig.subplots_adjust(left=0.13, right=0.96, top=0.94, bottom=0.10)
-    save_figure(fig, "figure4_sensitivity_and_selection")
+    save_figure(fig, "supplementary_figure1_sensitivity_and_selection", SUPPLEMENTARY_FIGURE_DIR)
 
     source_rows = []
     for family, frame in [("sensitivity", sensitivity_plot), ("weighting", weighted_plot)]:
@@ -761,15 +769,23 @@ def build_figure4() -> None:
                     "source_file": row.source,
                 }
             )
-    response.assign(panel="C").to_csv(FIGURE_DIR / "figure4_response_source_data.csv", index=False)
+    response.assign(panel="C").to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_response_source_data.csv", index=False
+    )
     heatmap.reset_index().melt(id_vars="label").rename(
         columns={"variable": "cohort", "value": "standardized_difference"}
-    ).assign(panel="D").to_csv(FIGURE_DIR / "figure4_selection_source_data.csv", index=False)
-    pd.DataFrame(source_rows).to_csv(FIGURE_DIR / "figure4_source_data.csv", index=False)
-    fractional.to_csv(FIGURE_DIR / "figure4_bounded_recall_source_data.csv", index=False)
+    ).assign(panel="D").to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_selection_source_data.csv", index=False
+    )
+    pd.DataFrame(source_rows).to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_source_data.csv", index=False
+    )
+    fractional.to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_bounded_recall_source_data.csv", index=False
+    )
 
 
-def build_figure5() -> None:
+def build_supplementary_figure3() -> None:
     patterns = read_csv("exposure_pattern_counts.csv")
     pattern_meta = read_csv("exposure_pattern_meta_results.csv")
     lagged = read_csv("lagged_transition_meta_results.csv")
@@ -949,7 +965,7 @@ def build_figure5() -> None:
     )
     ax_e.set_title("Effect modification", loc="left")
     fig.subplots_adjust(left=0.14, right=0.98, top=0.94, bottom=0.14)
-    save_figure(fig, "figure5_exploratory_analyses")
+    save_figure(fig, "supplementary_figure3_exploratory_analyses", SUPPLEMENTARY_FIGURE_DIR)
 
     sources = []
     for panel, frame in [
@@ -969,17 +985,25 @@ def build_figure5() -> None:
                     "source_file": row.source,
                 }
             )
-    same.assign(panel="A").to_csv(FIGURE_DIR / "figure5_pattern_source_data.csv", index=False)
-    pd.DataFrame(sources).to_csv(FIGURE_DIR / "figure5_source_data.csv", index=False)
+    SUPPLEMENTARY_FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+    same.assign(panel="A").to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure3_pattern_source_data.csv", index=False
+    )
+    pd.DataFrame(sources).to_csv(
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure3_source_data.csv", index=False
+    )
 
 
 def main() -> None:
     build_figure1()
     build_figure2()
-    build_figure3()
-    build_figure4()
-    build_figure5()
-    print(f"Wrote five main figures and source data to {FIGURE_DIR}")
+    build_supplementary_figure1()
+    build_supplementary_figure2()
+    build_supplementary_figure3()
+    print(
+        f"Wrote two main figures and three supplementary figures to {FIGURE_DIR} and "
+        f"{SUPPLEMENTARY_FIGURE_DIR}"
+    )
 
 
 if __name__ == "__main__":

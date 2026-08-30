@@ -1,6 +1,6 @@
 """Run repeated-loneliness, lagged-transition, and nonlinear-time analyses.
 
-These analyses are secondary to the prespecified baseline-loneliness model.
+These analyses are secondary to the primary baseline-loneliness model.
 They use the anonymized derived long files and write separate output tables.
 The ``same_item`` rule is limited to repeated single-item loneliness measures;
 the ``available_signal`` rule uses SHARE's later three-item scale as an
@@ -329,6 +329,8 @@ def lagged_models() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFr
                 )
                 continue
             try:
+                # Transition rows are clustered within participant; this exploratory
+                # model intentionally uses a participant-specific random intercept only.
                 fit, model_frame, re_formula, warning_messages = fit_mixed(
                     pairs,
                     formula,

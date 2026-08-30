@@ -432,6 +432,12 @@ def write_markdown(tables: dict[str, pd.DataFrame]) -> None:
 
 ## Supplementary Methods
 
+### Analysis hierarchy and target populations
+
+The primary estimands were the adjusted difference in baseline episodic-memory level and the adjusted difference in average episodic-memory slope between participants classified as lonely and not lonely at baseline; the slope contrast was rescaled to a 10-year interval. Both estimands were estimated in the selected longitudinal analysis population and pooled across five cohort-level units. Sensitivity analyses evaluated recall component, covariate adjustment, baseline-memory adjustment, retest timing, low-score restriction, exposure standardization, observation and survey weighting, and a bounded recall outcome. Repeated-exposure, lagged, nonlinear-time and effect-modification analyses were exploratory and hypothesis-generating; they were not prospectively registered and were not used to strengthen the primary claim.
+
+The target population for the longitudinal estimand was adults aged 50 years or older who met the baseline completeness criteria and contributed at least one later respondent-completed assessment containing both immediate and delayed recall. The estimand therefore conditions on survival, continued observation and ability to complete a subsequent direct assessment. It does not represent participants who died before repeat testing, were lost to follow-up, remained unobserved, or could not complete direct testing, and it does not define an outcome after death. The baseline level contrast was likewise estimated in this selected longitudinal analysis set rather than in all baseline-eligible adults.
+
 ### Analysis-set selection and observation weighting
 
 The baseline-eligible population comprised participants with complete core baseline variables and a respondent-completed baseline memory assessment. The primary longitudinal analysis additionally required at least one later respondent-completed assessment of both immediate and delayed recall. Proxy observations were excluded when a harmonized proxy indicator was available; CHARLS eligibility instead required completed-interview status and valid recall scores because the selected harmonized file lacked that indicator. We compared baseline characteristics between participants who did and did not enter the longitudinal sample using standardized mean differences. Observation weights were estimated in the full baseline-eligible participant-by-wave panel. Denominator logistic models included scheduled wave, SHARE country where applicable, baseline loneliness, baseline memory, age, sex, education and partnered status; numerator models included schedule terms only. Predicted probabilities were bounded to 0.01-0.99, and stabilized weights were truncated at the cohort-specific 1st and 99th percentiles. We assessed model convergence, fitted-probability ranges, weight distributions and Kish effective sample sizes. These weights address selection associated with measured baseline predictors, but they do not identify outcomes after death or remove selection through unmeasured health deterioration. No missing-value imputation was used.
@@ -443,6 +449,16 @@ To test whether results depended on treating the standardized memory composite a
 ### Exploratory repeated-exposure analyses
 
 Repeated-exposure patterns and lagged adjacent-assessment associations were treated as hypothesis-generating. Pattern classifications depended on later exposure observations and should not be interpreted as baseline prognostic groups or causal exposure regimes. The same-item analysis excluded SHARE because repeated harmonized single-item loneliness was unavailable; the available-signal analysis used the later SHARE three-item scale as an explicitly measurement-mixed fallback. The primary longitudinal coefficient is a linear slope rescaled to a 10-year interval, not a requirement that every cohort be observed for 10 years. Ten-year contrasts from the quadratic-time model are extrapolated in cohorts with shorter observed follow-up.
+
+Exploratory lagged models used participant-specific random intercepts only. Eligible adjacent-assessment transitions were treated as repeated observations within participant; previous loneliness, previous memory, the elapsed interval, baseline age, sex, education, partnered status, country terms and next-wave indicators were included as fixed effects. No participant-specific time slope was included in this exploratory transition model, which was not used to strengthen the primary estimand.
+
+## Supplementary Figure legends
+
+Supplementary Fig. S1 | Sensitivity, observation and selection analyses. (A) Pooled differences in average memory slope for the primary mixed model and outcome, covariate, baseline-memory and retest-timing sensitivity analyses. (B) Pooled estimates from the primary mixed model, unweighted generalized estimating equations, attrition inverse-probability weighting and survey-by-attrition weighting. (C) The percentage of scheduled participant-wave records with an observed respondent-completed immediate-and-delayed recall pair at each study wave. (D) Standardized differences in baseline characteristics between participants included in and excluded from the longitudinal analysis. Points denote estimates, horizontal lines denote 95% confidence intervals, and dashed vertical lines denote the null. The bounded fractional-logit estimate is reported on a different log-odds scale in Supplementary Table S5. Weighting addresses measured observation predictors and does not identify outcomes after death or remove unmeasured deterioration.
+
+Supplementary Fig. S2 | Observed wave-specific episodic-memory means. Mean cohort-standardized episodic-memory scores among respondent-completed observations, shown separately for participants classified as lonely and not lonely at baseline. Points denote observed means and vertical lines denote 95% confidence intervals; samples vary across waves. Lines are descriptive and are not covariate-adjusted individual trajectories or evidence of a causal effect.
+
+Supplementary Fig. S3 | Exploratory repeated-exposure, lagged, nonlinear and effect-modification analyses. (A) Same-item exposure patterns in CHARLS, ELSA, HRS and MHAS. (B) Exploratory slope contrasts for repeated-exposure patterns using the same-item rule and the available-signal rule. (C) Exploratory associations between exposure at one assessment and memory at the next assessment. (D) Group differences at selected horizons from quadratic-time models. (E) Exploratory differences in the loneliness-by-time contrast by sex, age and education. Points denote estimates and horizontal lines denote 95% confidence intervals. These analyses use future exposure information, measurement-mixed fallback rules or model extrapolation, were not prospectively preregistered, and were not used to strengthen the primary claim; no multiplicity-adjusted P values were applied to the repeated-exposure, lagged or nonlinear contrasts.
 
 ## Supplementary Tables
 
@@ -474,7 +490,7 @@ Repeated-exposure patterns and lagged adjacent-assessment associations were trea
 
 ### Table S5 | Primary and sensitivity meta-analysis results
 
-{render_table(s5, ['analysis', 'effect_scale', 'pooled_estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'])}
+{render_table(s5, ['analysis', 'effect_scale', 'pooled_estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'], header_labels={'analysis': 'analysis', 'effect_scale': 'effect scale', 'pooled_estimate': 'pooled estimate', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I-squared (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high'})}
 
 ### Table S6 | Baseline differences between participants included in and excluded from the longitudinal sample
 
@@ -484,13 +500,13 @@ Positive standardized differences indicate a higher mean or proportion among inc
 
 ### Table S7 | Exploratory repeated-exposure, lagged and nonlinear meta-results
 
-{render_table(s7_main, ['analysis_family', 'contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'], header_labels={'analysis_family': 'analysis family', 'effect_scale': 'effect scale', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I2 (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high'})}
+{render_table(s7_main, ['analysis_family', 'contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'], header_labels={'analysis_family': 'analysis family', 'contrast': 'contrast', 'effect_scale': 'effect scale', 'k': 'k', 'estimate': 'estimate', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I-squared (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high'})}
 
 No multiplicity-adjusted P values were applied to these exploratory repeated-exposure, lagged or nonlinear contrasts.
 
 ### Table S7 (continued) | Effect-modification meta-results
 
-{render_table(s7_modifiers, ['contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high', 'adjusted_p_value'], header_labels={'effect_scale': 'effect scale', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I2 (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high', 'adjusted_p_value': 'adjusted P value'})}
+{render_table(s7_modifiers, ['contrast', 'effect_scale', 'k', 'estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high', 'adjusted_p_value'], header_labels={'contrast': 'contrast', 'effect_scale': 'effect scale', 'k': 'k', 'estimate': 'estimate', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I-squared (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high', 'adjusted_p_value': 'adjusted P value'})}
 
 ### Table S8 | Availability and calendar coverage of harmonized death information
 
@@ -500,7 +516,7 @@ Death counts in this table describe metadata coverage in each full harmonized so
 
 ### Table S9 | Leave-one-cohort-out meta-analysis
 
-{render_table(s9, ['model', 'omitted_cohort', 'k', 'pooled_estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'])}
+{render_table(s9, ['model', 'omitted_cohort', 'k', 'pooled_estimate', 'ci_low', 'ci_high', 'i2_percent', 'prediction_low', 'prediction_high'], header_labels={'model': 'model', 'omitted_cohort': 'omitted cohort', 'k': 'k', 'pooled_estimate': 'pooled estimate', 'ci_low': '95% CI low', 'ci_high': '95% CI high', 'i2_percent': 'I-squared (%)', 'prediction_low': '95% prediction low', 'prediction_high': '95% prediction high'})}
 
 Each row omits the named cohort before random-effects pooling. Estimates are baseline-SD slope differences rescaled to a 10-year interval.
 

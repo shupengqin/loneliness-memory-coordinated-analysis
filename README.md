@@ -2,7 +2,7 @@
 
 This repository contains the analysis code for a coordinated longitudinal study of baseline loneliness and episodic-memory change in CHARLS, ELSA, HRS, MHAS and SHARE.
 
-The primary estimand is the difference in cohort-standardized episodic-memory slope between participants classified as lonely and not lonely at baseline, rescaled to a 10-year interval. The workflow also contains sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, five main figures, five main tables, supplementary tables and independent R checks. Exploratory analyses were not prospectively preregistered and are labelled accordingly in the manuscript.
+The primary estimand is the difference in cohort-standardized episodic-memory slope between participants classified as lonely and not lonely at baseline, rescaled to a 10-year interval. The workflow also contains sensitivity analyses, attrition-weighted models, exploratory repeated-exposure analyses, two main figures, three supplementary figures, one main table, ten supplementary tables and independent R checks. Exploratory analyses were not prospectively preregistered and are labelled accordingly in the manuscript.
 
 ## Data are not included
 
@@ -78,8 +78,8 @@ data/      data-use instructions; raw files are ignored
 outputs/   generated tables, figures and derived data; contents are ignored
 ~~~
 
-The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials. The manuscript figure script writes five main figures with editable SVG/PDF outputs, 600 dpi TIFF files, 300 dpi PNG previews and aggregate figure Source Data. The manuscript table script writes five main tables as CSV and Markdown files. The supplementary-material script writes ten supplementary tables, including leave-one-cohort-out estimates and observation-weight diagnostics.
+The primary analysis is the baseline-loneliness mixed model. Repeated-exposure, lagged-transition, nonlinear-time, bounded-recall and weighting analyses are secondary or sensitivity analyses and should be interpreted according to the methods recorded in the scripts and generated supplementary materials. The exploratory lagged-transition model uses participant-specific random intercepts only; it is distinct from the primary trajectory model, which allows participant-specific random intercepts and time slopes. The manuscript figure script writes two main figures and three supplementary figures with editable SVG/PDF outputs, 600 dpi TIFF files, 300 dpi PNG previews and aggregate figure Source Data. The manuscript table script writes one main table as CSV and Markdown files. The supplementary-material script writes ten supplementary tables, including leave-one-cohort-out estimates and observation-weight diagnostics.
 
 ## Version control and release
 
-This repository is intended to hold code and reproducibility instructions. Before making it public, inspect the Git-tracked file list and confirm that no raw data, individual-level output, private author information or credential has been added. A code license and a frozen release should be selected by the authors before publication.
+This repository is intended to hold code and reproducibility instructions. For each public release, inspect the Git-tracked file list and confirm that no raw data, individual-level output, private author information or credential has been added. The manuscript package should cite a pushed, frozen commit rather than a local working-tree state. A code license should be selected by the authors before publication.
