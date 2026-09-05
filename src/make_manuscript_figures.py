@@ -1,9 +1,9 @@
 # Academic Figure Skill Asset Confirmation (verified against assets/figures/)
 # Main Figure 1: study flow -> cross-type inherit -> param inherit
 # Main Figure 2: primary associations -> Forest -> param inherit
-# Supplementary Figure S1: sensitivity and selection -> Forest/Heatmap -> param inherit
-# Supplementary Figure S2: observed trajectories -> LineTrend -> param inherit
-# Supplementary Figure S3: exploratory analyses -> Forest/GroupedBarChart -> param inherit
+# Main Figure 3: sensitivity and selection -> Forest/Heatmap -> param inherit
+# Appendix 2: observed trajectories -> LineTrend -> param inherit
+# Appendix 3: exploratory analyses -> Forest/GroupedBarChart -> param inherit
 # RULE: All panels use the validated analysis outputs below; no participant-level data are exported.
 
 """Create the main and supplementary figures for the coordinated ageing-cohort manuscript.
@@ -407,7 +407,7 @@ def build_figure1() -> None:
     )
 
 
-def build_supplementary_figure2() -> None:
+def build_supplementary_figure1() -> None:
     rows: list[dict[str, float | int | str]] = []
     for cohort in COHORTS:
         frame = pd.read_csv(DERIVED_DIR / f"{cohort.lower()}_long.csv.gz")
@@ -476,9 +476,9 @@ def build_supplementary_figure2() -> None:
         linespacing=1.35,
     )
     fig.subplots_adjust(left=0.09, right=0.985, top=0.94, bottom=0.13, hspace=0.46, wspace=0.29)
-    save_figure(fig, "supplementary_figure2_observed_trajectories", SUPPLEMENTARY_FIGURE_DIR)
+    save_figure(fig, "supplementary_figure1_observed_trajectories", SUPPLEMENTARY_FIGURE_DIR)
     trajectory.to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure2_source_data.csv", index=False
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_source_data.csv", index=False
     )
 
 
@@ -581,7 +581,7 @@ def build_figure2() -> None:
     pd.DataFrame(source_rows).to_csv(FIGURE_DIR / "figure2_source_data.csv", index=False)
 
 
-def build_supplementary_figure1() -> None:
+def build_figure3() -> None:
     meta = read_csv("meta_analysis_results.csv")
     sensitivity = read_csv("sensitivity_meta_results.csv")
     weighted = read_csv("attrition_weighted_meta_results.csv")
@@ -592,7 +592,7 @@ def build_supplementary_figure1() -> None:
 
     sensitivity_labels = {
         "core": "Primary mixed model",
-        "full": "Fully adjusted",
+        "full": "Additional covariate adjustment",
         "immediate_memory": "Immediate recall",
         "delayed_memory": "Delayed recall",
         "followup_adjusted_baseline_memory": "Follow-up + baseline memory",
@@ -734,7 +734,16 @@ def build_supplementary_figure1() -> None:
     for i in range(heatmap.shape[0]):
         for j in range(heatmap.shape[1]):
             value = heatmap.iloc[i, j]
-            ax_d.text(j, i, f"{value:.2f}", ha="center", va="center", fontsize=6.1, color=CHARCOAL)
+            text_color = "white" if np.isfinite(value) and abs(value) >= 0.5 else CHARCOAL
+            ax_d.text(
+                j,
+                i,
+                f"{value:.2f}",
+                ha="center",
+                va="center",
+                fontsize=6.1,
+                color=text_color,
+            )
     ax_d.set_xticks(np.arange(-0.5, len(COHORTS), 1), minor=True)
     ax_d.set_yticks(np.arange(-0.5, len(heatmap.index), 1), minor=True)
     ax_d.grid(which="minor", color="white", linewidth=0.9)
@@ -747,14 +756,14 @@ def build_supplementary_figure1() -> None:
     fig.text(
         0.5,
         0.015,
-        "The bounded fractional-logit result is on a different log-odds scale and is reported in Supplementary Table S5.",
+        "The bounded fractional-logit result is on a different log-odds scale and is reported in Appendix 8 in the Supplementary Data.",
         ha="center",
         va="bottom",
         fontsize=6.2,
         color=MUTED,
     )
     fig.subplots_adjust(left=0.13, right=0.96, top=0.94, bottom=0.10)
-    save_figure(fig, "supplementary_figure1_sensitivity_and_selection", SUPPLEMENTARY_FIGURE_DIR)
+    save_figure(fig, "figure3_sensitivity_and_selection", FIGURE_DIR)
 
     source_rows = []
     for family, frame in [("sensitivity", sensitivity_plot), ("weighting", weighted_plot)]:
@@ -770,22 +779,22 @@ def build_supplementary_figure1() -> None:
                 }
             )
     response.assign(panel="C").to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_response_source_data.csv", index=False
+        FIGURE_DIR / "figure3_response_source_data.csv", index=False
     )
     heatmap.reset_index().melt(id_vars="label").rename(
         columns={"variable": "cohort", "value": "standardized_difference"}
     ).assign(panel="D").to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_selection_source_data.csv", index=False
+        FIGURE_DIR / "figure3_selection_source_data.csv", index=False
     )
     pd.DataFrame(source_rows).to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_source_data.csv", index=False
+        FIGURE_DIR / "figure3_source_data.csv", index=False
     )
     fractional.to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure1_bounded_recall_source_data.csv", index=False
+        FIGURE_DIR / "figure3_bounded_recall_source_data.csv", index=False
     )
 
 
-def build_supplementary_figure3() -> None:
+def build_supplementary_figure2() -> None:
     patterns = read_csv("exposure_pattern_counts.csv")
     pattern_meta = read_csv("exposure_pattern_meta_results.csv")
     lagged = read_csv("lagged_transition_meta_results.csv")
@@ -965,7 +974,7 @@ def build_supplementary_figure3() -> None:
     )
     ax_e.set_title("Effect modification", loc="left")
     fig.subplots_adjust(left=0.14, right=0.98, top=0.94, bottom=0.14)
-    save_figure(fig, "supplementary_figure3_exploratory_analyses", SUPPLEMENTARY_FIGURE_DIR)
+    save_figure(fig, "supplementary_figure2_exploratory_analyses", SUPPLEMENTARY_FIGURE_DIR)
 
     sources = []
     for panel, frame in [
@@ -987,21 +996,21 @@ def build_supplementary_figure3() -> None:
             )
     SUPPLEMENTARY_FIGURE_DIR.mkdir(parents=True, exist_ok=True)
     same.assign(panel="A").to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure3_pattern_source_data.csv", index=False
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure2_pattern_source_data.csv", index=False
     )
     pd.DataFrame(sources).to_csv(
-        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure3_source_data.csv", index=False
+        SUPPLEMENTARY_FIGURE_DIR / "supplementary_figure2_source_data.csv", index=False
     )
 
 
 def main() -> None:
     build_figure1()
     build_figure2()
+    build_figure3()
     build_supplementary_figure1()
     build_supplementary_figure2()
-    build_supplementary_figure3()
     print(
-        f"Wrote two main figures and three supplementary figures to {FIGURE_DIR} and "
+        f"Wrote three main figures and two supplementary figures to {FIGURE_DIR} and "
         f"{SUPPLEMENTARY_FIGURE_DIR}"
     )
 

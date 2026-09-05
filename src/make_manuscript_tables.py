@@ -1,4 +1,4 @@
-"""Create the single main table from the validated global ageing analysis outputs."""
+"""Create the two main tables from the validated global ageing analysis outputs."""
 
 from __future__ import annotations
 
@@ -73,7 +73,43 @@ def write_table(stem: str, frame: pd.DataFrame, title: str, note: str) -> None:
     (TABLE_DIR / f"{stem}.md").write_text(content, encoding="utf-8")
 
 
-def main_table() -> None:
+def cohort_characteristics_table() -> None:
+    cohort = read_csv("table_1_cohort_characteristics.csv", "tables")
+    design = read_csv(
+        "table_s1_cohort_design_and_measurement.csv", "supplementary_tables"
+    )[["cohort", "maximum_observed_followup_years"]]
+    cohort = cohort.merge(design, on="cohort", how="left", validate="one_to_one")
+    table = pd.DataFrame(
+        {
+            "Cohort": cohort["cohort"],
+            "Setting": cohort["setting"],
+            "Baseline eligible, n": cohort["baseline_eligible_n"].map(n),
+            "Longitudinal sample, n": cohort["longitudinal_sample_n"].map(n),
+            "Retention (%)": cohort["retention_percent"].map(one),
+            "Maximum follow-up (years)": cohort[
+                "maximum_observed_followup_years"
+            ].map(one),
+            "Age, mean (SD)": cohort["age_mean_sd"],
+            "Women (%)": cohort["women_percent"].map(one),
+            "Tertiary education (%)": cohort["tertiary_education_percent"].map(one),
+            "Partnered (%)": cohort["partnered_percent"].map(one),
+            "Lonely, n (%)": cohort["lonely_n_percent"],
+        }
+    )
+    write_table(
+        "table_1_cohort_characteristics",
+        table,
+        "Table 1 | Cohort characteristics and analysis-set retention",
+        "Participant characteristics are calculated in the longitudinal analysis sample. "
+        "Retention is the proportion of baseline-eligible participants contributing at least "
+        "one later respondent-completed assessment containing both immediate and delayed "
+        "recall. Maximum follow-up is the largest observed interval from baseline among "
+        "included respondent-completed memory assessments. Detailed characteristics by "
+        "baseline loneliness group are provided in Appendix 6 in the Supplementary Data.",
+    )
+
+
+def primary_model_table() -> None:
     fixed = read_csv("model_fixed_effects.csv")
     models = read_csv("cohort_model_estimates.csv")
     meta = read_csv("meta_analysis_results.csv")
@@ -138,16 +174,17 @@ def main_table() -> None:
         }
     )
     write_table(
-        "table_1_primary_model_estimates",
+        "table_2_primary_model_estimates",
         pd.DataFrame(rows),
-        "Table 1 | Primary model estimates across five ageing cohorts",
+        "Table 2 | Primary model estimates across five ageing cohorts",
         "Cohort-specific estimates came from core linear mixed-effects models with participant-specific random intercepts and time slopes in the selected longitudinal analysis sample. Pooled estimates used two-stage REML random-effects meta-analysis with Hartung-Knapp confidence intervals and t-based prediction intervals. Five cohort-level estimates were pooled; SHARE contributed one estimate after adjustment for country and country-by-time terms. Baseline memory level and the memory slope scaled to a 10-year interval are reported on the cohort-specific baseline-SD scale; this scaling does not imply 10 years of observation for every cohort. A confidence interval crossing zero is not an equivalence test, and heterogeneity statistics based on five units are descriptive.",
     )
 
 
 def main() -> None:
-    main_table()
-    print(f"Wrote one main table to {TABLE_DIR}")
+    cohort_characteristics_table()
+    primary_model_table()
+    print(f"Wrote two main tables to {TABLE_DIR}")
 
 
 if __name__ == "__main__":
